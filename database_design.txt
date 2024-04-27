@@ -1,0 +1,22 @@
+Teams(team_id, club_name, coach, stadium, city)
+    where team_id is the primary key
+
+Players(player_id, first_name, last_name, position, team)
+    where player_id is the primary key
+    and team is a foreign key to Teams.team_id
+
+Matches(match_id, home_team, away_team, date, stadium, home_team_score, away_team_score)
+    where match_id is the primary key
+    and home_team is a foreign key to Teams.team_id
+    and away_team is a foreign key to Teams.team_id
+
+Goals(goal_id, player_id, match_id, team_id)
+    where goal_id is the primary key
+    and player_id is a foreign key to Players.player_id
+    and match_id is a foreign key to Matches.match_id
+    and team_id is a foreign key to Teams.team_id
+
+Standings(standing_id, team_id, matches_played, wins, draws, losses, points)
+    where standing_id is the primary key
+    and team_id is a foreign key to Teams.team_id
+    

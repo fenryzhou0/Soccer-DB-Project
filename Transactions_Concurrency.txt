@@ -1,0 +1,25 @@
+According to microsoft, sqlite uses the serializable isolation level by default.
+Source:
+https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/transactions
+
+In my code, I use db.session from SQLAlchemy to implement transactions. The transactions follow the format:
+try:
+    // Code for database operations
+    db.session.commit()
+except:
+    db.session.rollback()
+
+This ensures that any database operations and any commits to the database are atomic.
+
+
+Concurrency:
+Right now, this is designed as a single-user application. However, this can be scaled to a version where there are many users.
+In a version with multiple users, there would have to be pages to be able to update other tables besides just the Teams table.
+The application can utilize multi-threading to allow multiple users to connect,
+and would likely need a user login system.
+
+In this version, read repeatable would be an appropriate isolation level.
+Locking an entire table in serializable would be excessive, since sometimes there might be multiple rows added/updated
+to/in the Goals/Matches/Standings table for example when multiple matches finish simulatenously.
+On the other hand, the user should be able to read consistent information, hence why read committed would not be appropriate.
+Therefore, I think read repeatable would be a good isolation level in the multi user setting.

@@ -1,0 +1,5 @@
+1. Plan out the work for the project
+2. Work on large projects like these a little bit at a time over a long period of time rather than cramming
+    - Allows for extra time if any unexpected bugs come up
+3. Take some time to learn how the different technologies work and how they interact with each other
+    - Will save much time later on

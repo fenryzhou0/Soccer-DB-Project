@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Team Report</title>
+        <style>
+            table {
+                border-collapse: collapse;
+            }
+
+            th, td {
+                border: 1px solid #ccc;
+                padding: 8px;
+            }
+            </style>
+    </head>
+<body>
+    <h1>Get a report</h1>
+    <button onclick="location.href='/'" type="button">Back</button>
+
+    <button id="player-stats-btn" onclick="showDropdownAndLoadTeams()">Player Stats</button>
+
+    <select id="teamDropDownPlayers" style="display: none;" onclick="loadTeamsPlayerDropdown()">
+        <!-- Options will be populated dynamically -->
+    </select>
+    <select id="playerDropdown" style="display: none;" onclick="loadPlayersDropdown()"> 
+        <!-- Options will be populated dynamically -->
+    </select>
+
+    <button id="generatePayerReportButton" style="display: none;" onclick="generatePlayerReport()">Generate Player Report</button>
+
+    <button id="TeamStatsButton" onclick="showTeamStatsFields()">Team Stats</button>
+    <div id="teamStatsForm" style="display: none;">
+        <input type="text" id="minMatchesPlayed" placeholder="Minimum Matches Played">
+        <input type="text" id="maxMatchesPlayed" placeholder="Maximum Matches Played">
+        <input type="text" id="minPoints" placeholder="Minimum Team Points">
+        <input type="text" id="maxPoints" placeholder="Maximum Team Points">
+        <button id="generateTeamStatsButton" onclick="generateTeamReport()">Generate Team Report</button>
+    </div>
+
+    <h1>Team Report</h1>
+
+    <div id="report-container">
+        <table id="team-report">
+            <thead>
+                <tr>
+                    <!-- Dynamically generated column names will go here -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamically generated team report rows will go here -->
+            </tbody>
+        </table>
+    </div>
+
+
+    <script>
+        function showDropdownAndLoadTeams() {
+            document.getElementById('teamDropDownPlayers').style.display = 'block';
+            loadTeamsPlayerDropdown();
+        }
+
+        function showTeamStatsFields() {
+            document.getElementById('teamStatsForm').style.display = 'block';
+        }
+        function loadTeamsPlayerDropdown() {
+            fetch('/get_teams')
+                .then(response => response.json())
+                .then(data => {
+                    const teamDropdownPlayers = document.getElementById('teamDropDownPlayers');
+                    const selectedValue = teamDropdownPlayers.value;
+                    teamDropdownPlayers.innerHTML = '<option value="">Select a team</option>'; // Clear the dropdown
+                    data.teams.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team.id;
+                        option.text = `${team.id} - ${team.clubName}`;
+                        teamDropdownPlayers.appendChild(option);
+                    });
+                    teamDropdownPlayers.value = selectedValue; // Preserve the selected value
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        function loadTeamsTeamDropdown() {
+            fetch('/get_teams')
+                .then(response => response.json())
+                .then(data => {
+                    const teamDropdownPlayers = document.getElementById('teamDropdownTeams');
+                    const selectedValue = teamDropdownPlayers.value;
+                    teamDropdownPlayers.innerHTML = '<option value="">Select a team</option>'; // Clear the dropdown
+                    data.teams.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team.id;
+                        option.text = `${team.id} - ${team.clubName}`;
+                        teamDropdownPlayers.appendChild(option);
+                    });
+                    teamDropdownPlayers.value = selectedValue; // Preserve the selected value
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        const teamDropdownPlayers = document.getElementById('teamDropDownPlayers');
+        teamDropdownPlayers.addEventListener("change", showPlayersDropdown);
+        function showPlayersDropdown() {
+            const teamDropdown = document.getElementById('teamDropDownPlayers');
+            const selectedTeamID = teamDropdown.value;
+            if (selectedTeamID !== "") {
+                document.getElementById("playerDropdown").style.display = "block";
+                loadPlayersDropdown();
+            } else {
+                document.getElementById("playerDropdown").style.display = "none";
+            }             
+        }
+        function loadPlayersDropdown() {
+            const teamDropdown = document.getElementById('teamDropDownPlayers');
+            const selectedTeamID = teamDropdown.value;
+            fetch(`/get_players?team_id=${selectedTeamID}`)
+                .then(response => response.json())
+                .then(data => {
+                    const playerDropdown = document.getElementById('playerDropdown');
+                    const selectedValue = playerDropdown.value;
+                    playerDropdown.innerHTML = '<option value="">Select a player</option>'; // Clear the dropdown
+                    data.players.forEach(player => {
+                        const option = document.createElement('option');
+                        option.value = player.id;
+                        option.text = `${player.id} - ${player.first_name} ${player.last_name}`;
+                        playerDropdown.appendChild(option);
+                    });
+                    playerDropdown.value = selectedValue; // Preserve the selected value
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        const playerDropdown = document.getElementById('playerDropdown');
+        playerDropdown.addEventListener("change", showGenerateReportButton);
+        function showGenerateReportButton() {
+            const selectedPlayerID = playerDropdown.value;
+            const selectedTeamID = document.getElementById('teamDropDownPlayers').value;
+            if (selectedPlayerID !== "" && selectedTeamID !== "") {
+                document.getElementById("generatePayerReportButton").style.display = "block";
+            } else {
+                document.getElementById("generatePayerReportButton").style.display = "none";
+            }             
+        }
+        
+        function generatePlayerReport() {
+        const teamDropdown = document.getElementById('teamDropDownPlayers');
+        const playerDropdown = document.getElementById('playerDropdown');
+
+        const selectedTeamID = teamDropdown.value;
+        const selectedPlayerID = playerDropdown.value;
+
+        fetch(`/generate_player_report?team_id=${selectedTeamID}&player_id=${selectedPlayerID}`)
+        .then(response => response.json())
+                .then(data => {
+                    const reportContainer = document.getElementById('report-container');
+                    reportContainer.innerHTML = ''; // Clear the existing report content
+
+                    const playerReport = document.createElement('ul');
+                    playerReport.id = 'player-report';
+
+                    data.forEach(player => {
+                        const reportItem = document.createElement('li');
+
+                        const playerInfo = document.createElement('div');
+                        playerInfo.classList.add('player-info');
+                        playerInfo.textContent = `${player.first_name} ${player.last_name} - ${player.club_name}`;
+                        reportItem.appendChild(playerInfo);
+
+                        const playerStats = document.createElement('div');
+                        playerStats.classList.add('player-stats');
+                        playerStats.textContent = `Total Goals: ${player.total_goals || 0}, Number of Matches: ${player.matches_played || 0}, Average Goals per Game: ${player.avg_goals_per_game || 0}`;
+                        reportItem.appendChild(playerStats);
+
+                        playerReport.appendChild(reportItem);
+                    });
+
+                    reportContainer.appendChild(playerReport);
+                })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        
+        function generateTeamReport() {
+            const teamDropdown = document.getElementById('teamDropdownTeams');
+            const minMatchesPlayed = document.getElementById('minMatchesPlayed').value;
+            const maxMatchesPlayed = document.getElementById('maxMatchesPlayed').value;
+            const minPoints = document.getElementById('minPoints').value;
+            const maxPoints = document.getElementById('maxPoints').value;
+            fetch('/generate_team_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ minMatchesPlayed, maxMatchesPlayed, minPoints, maxPoints }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const reportContainer = document.getElementById('report-container');
+                reportContainer.innerHTML = ''; // Clear the existing report content
+
+                const teamReport = document.createElement('ul');
+                teamReport.id = 'team-report';
+                // Dynamically generate the team report content
+                data.forEach(team => {
+                    const reportItem = document.createElement('li');
+
+                    const teamInfo = document.createElement('div');
+                    teamInfo.classList.add('team-info');
+                    teamInfo.textContent = `${team.club_name} | Matches Played: ${team.matches_played} | Wins: ${team.wins} | Draws: ${team.draws} | Losses: ${team.losses} | Points: ${team.points} | Average Points Per Match: ${team.avg_points_per_match}`;
+                    reportItem.appendChild(teamInfo);
+
+                    teamReport.appendChild(reportItem);
+                });
+                reportContainer.appendChild(teamReport);
+
+            })
+            
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+            
+    </script>
+</body>
+</html>

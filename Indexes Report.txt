@@ -1,0 +1,24 @@
+I have created one index: idx_teams_team_id. This index is a B+ tree index and was created with the command: 
+"CREATE INDEX idx_teams_team_id ON Teams(team_id);"
+
+Verify the existence of the index:
+"pragma index_info(idx_teams_team_id);"
+
+This is an index on Teams.team_id. This index supports all the queries used in this project.
+In my report generation, I use two queries: One to get player statistics and one to get team statistics.
+In both, the Teams.team_id attribute is used.
+
+In my report for player statistics, the user inputs a specific team id and a player id.
+The query filters based on these two attributes and returns information about the specific player playing for that team.
+The query can utilize this index by traversing the B+ tree to the leaf node pertaining to the user-inputed team_id,
+and then quickly find the corresponding RID in the Teams table.
+
+In my report for team statistics, the user inputs a range of matches played and points earned.
+The query filters based on these attributes and returns isome summary statistics about all the teams that fit the criteria.
+This query benefits from this index because the join between the Teams and Standings tables are based on team_id.
+When an index is present on the team_id column, SQLite can use this index to speed up the join operation as it can quickly
+find the corresponding RID in the Teams table to join.
+
+
+
+

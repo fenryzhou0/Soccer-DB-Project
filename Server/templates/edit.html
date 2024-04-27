@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Edit team data</title>
+</head>
+<body>
+    <button onclick="location.href='/'" type="button">Back</button>
+    <h2>Add a team</h2>
+    <button id="addTeamBtn" onclick="addTeam()" type="button">Add Team</button>
+    <div id="teamFormAdd" style="display:none">
+        <input type="text" id="team_id_add" placeholder="Team ID">
+        <input type="text" id="club_name_add" placeholder="Club Name">
+        <input type="text" id="coach_add" placeholder="Coach">
+        <input type="text" id="stadium_add" placeholder="Stadium">
+        <input type="text" id="city_add" placeholder="City">
+        <button id="doneBtn" onclick="submitTeam()" type="button">Done</button>
+    </div>
+    <div id="team_added_message" style="display:none"></div>
+    <h2>Delete a team</h2>
+    <select id="teamDropdownDelete" onclick="updateTeamsDelete()">
+        <option value="">Select a team to delete</option>
+        <!-- Teams will be dynamically populated here -->
+    </select>
+    <button id="deleteTeamBtn" onclick="deleteTeam()" type="button" style="display:none">Delete</button>
+    <div id="deleteMessage"></div> <!-- Add this div to display the delete message -->
+    <h2>Edit a team</h2>
+    <select id="teamDropdownEdit" onclick="updateTeamsEdit()">
+        <option value="">Select a team to edit</option>
+        <!-- Teams will be dynamically populated here -->
+      </select>
+      <div id="teamFormEdit" style="display:none">
+        <input type="text" id="team_id_edit" placeholder="Team ID">
+        <input type="text" id="club_name_edit" placeholder="Club Name">
+        <input type="text" id="coach_edit" placeholder="Coach">
+        <input type="text" id="stadium_edit" placeholder="Stadium">
+        <input type="text" id="city_edit" placeholder="City">
+        <button id="doneBtn" onclick="submitEdit()" type="button">Done</button>
+      </div>
+      <div id="team_edited_message" style="display:none"></div>
+    <script>
+        let selectedTeamId = null;
+        function updateTeamsEdit() {
+            fetch('/get_teams')
+                .then(response => response.json())
+                .then(data => {
+                    const teamDropdown = document.getElementById("teamDropdownEdit");
+                    const selectedValue = teamDropdown.value;
+                    teamDropdown.innerHTML = "<option value=''>Select a team to edit</option>";
+                    data.teams.forEach(team => {
+                        const option = document.createElement("option");
+                        option.value = team.id;
+                        option.text = `${team.id} - ${team.clubName}`;
+                        teamDropdown.appendChild(option);
+                    });
+                    teamDropdown.value = selectedValue; // Preserve the selected value
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        const teamDropdownEdit = document.getElementById("teamDropdownEdit");
+        teamDropdownEdit.addEventListener("change", updateEditBtn);
+        function updateEditBtn() {
+            const teamDropdown = document.getElementById("teamDropdownEdit");
+            const teamFormEdit = document.getElementById("teamFormEdit");
+            selectedTeamId = teamDropdown.value;
+            if (selectedTeamId !== "") {
+                teamFormEdit.style.display = "block";
+            } else {
+                teamFormEdit.style.display = "none";
+            }
+        }
+        function editTeam() {
+            document.getElementById("teamFormEdit").style.display = "block";
+        }
+
+        function submitEdit() {
+            const teamDropdownEdit = document.getElementById("teamDropdownEdit");
+            const selected_team_id = teamDropdownEdit.value;
+
+            const team_id = document.getElementById("team_id_edit").value;
+            const club_name = document.getElementById("club_name_edit").value;
+            const coach = document.getElementById("coach_edit").value;
+            const stadium = document.getElementById("stadium_edit").value;
+            const city = document.getElementById("city_edit").value;
+
+            fetch('/edit_team', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ selected_team_id, team_id, club_name, coach, stadium, city }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Network response was not ok');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Display the success message received from the server
+                displayMessage(data.message, "team_edited_message");
+            })
+            .catch(error => {
+                // Display the error message received from the server
+                displayMessage("Error editing a team. " + error.message, "team_edited_message");
+                console.error('Error:', error);
+            });
+        }
+
+        function updateTeamsDelete() {
+            fetch('/get_teams')
+                .then(response => response.json())
+                .then(data => {
+                    const teamDropdown = document.getElementById("teamDropdownDelete");
+                    const selectedValue = teamDropdown.value;
+                    teamDropdown.innerHTML = "<option value=''>Select a team to delete</option>";
+                    data.teams.forEach(team => {
+                        const option = document.createElement("option");
+                        option.value = team.id;
+                        option.text = `${team.id} - ${team.clubName}`;
+                        teamDropdown.appendChild(option);
+                    });
+                    teamDropdown.value = selectedValue; // Preserve the selected value
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        const teamDropdownDelete = document.getElementById("teamDropdownDelete");
+        teamDropdownDelete.addEventListener("change", updateDeleteBtn);
+
+        //updateTeams();
+        function updateDeleteBtn() {
+            const deleteBtn = document.getElementById("deleteTeamBtn");
+            const teamDropdown = document.getElementById("teamDropdownDelete");
+            selectedTeamId = teamDropdown.value;
+            if (selectedTeamId !== "") {
+                deleteBtn.style.display = "block";
+            } else {
+                deleteBtn.style.display = "none";
+            }
+        }
+        function deleteTeam() {
+            if (selectedTeamId !== null) {
+                fetch(`/delete_team/${selectedTeamId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayMessage(data.message, "deleteMessage");
+                    updateTeams(); // Update the dropdown after delete
+                    updateDeleteBtn();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+        
+
+        function addTeam() {
+            document.getElementById("teamFormAdd").style.display = "block";
+        }
+
+        function submitTeam() {
+            const team_id = document.getElementById("team_id_add").value;
+            const club_name = document.getElementById("club_name_add").value;
+            const coach = document.getElementById("coach_add").value;
+            const stadium = document.getElementById("stadium_add").value;
+            const city = document.getElementById("city_add").value;
+
+            fetch('/add_team', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ team_id, club_name, coach, stadium, city }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Network response was not ok');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Display the success message received from the server
+                displayMessage(data.message, "team_added_message");
+            })
+            .catch(error => {
+                // Display the error message received from the server
+                displayMessage("Error creating a team. " + error.message, "team_added_message");
+                console.error('Error:', error);
+            });
+        }
+
+        function displayMessage(message, displayArea) {
+            const messageDiv = document.getElementById(displayArea);
+            messageDiv.textContent = message;
+            messageDiv.style.display = "block";
+
+            setTimeout(() => {
+                messageDiv.style.display = "none"; // Clear the message after a few seconds
+            }, 3000); // Clear the message after 3 seconds
+        }
+    </script>
+</body>
+</html>
